@@ -65,10 +65,10 @@ class AI:
                 domains[key].remove(assignments[key])
 
             # check conflicts ?
-            for domain in list(domain.values()):
-                if len(domain) <= 0:
+            for single_domain in list(domains.values()):
+                if len(single_domain) <= 0:
                     assignments[(-1,-1)] = -1 # this indicates conflict.
-                    return assignments, domain
+                    return assignments, domains
 
     def make_decision(self, domains, assignments):
         # remove all assigned locations from the key
