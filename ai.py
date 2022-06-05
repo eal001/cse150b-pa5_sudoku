@@ -1,4 +1,6 @@
 from __future__ import print_function
+from multiprocessing.sharedctypes import Value
+from threading import local
 from game import sd_peers, sd_spots, sd_domain_num, init_domains, \
     restrict_domain, SD_DIM, SD_SIZE
 import random, copy
@@ -16,12 +18,19 @@ class AI:
 
         # TODO: implement backtracking search. 
         while True:
-            # assignments[(-1,-1)] = 0
+            assignments[(-1,-1)] = 0
             assignments, domains = self.propagate(domains, assignments)
-            print("#################\nfinal assignment check")
-            print(assignments[(-1, -1)])
+
+            # print("look for missing values")
+            
+            # for i in range( 9):   # all values in the same box
+            #     for j in range( 9):
+            #         if( not (i,j) in assignments):
+            #             print(i,j)
+
+            # print(assignments[(-1, -1)])
             if assignments[(-1,-1)] != -1:      # no conflicts
-                if len(assignments.keys) == 82  : # finished! all assigned
+                if len(list(assignments.keys())) == 82  : # finished! all assigned
                     return domains
                 else:                           # not finished, need to make a decision
                     assignments, location = self.make_decision(domains, assignments)
@@ -48,11 +57,11 @@ class AI:
     # location should be a 0 indexed (x, y)
     def get_relevant_coords(self, location):
         relevant_coords = []
-        for i in range(8):  # all values in the same column
+        for i in range(9):  # all values in the same column
             if i == location[0]: continue
             relevant_coords.append((i, location[1]))
 
-        for j in range(8): # all values in the same row
+        for j in range(9): # all values in the same row
             if j == location[1]: continue
             relevant_coords.append((location[0], j))
 
@@ -63,53 +72,81 @@ class AI:
         box_y_min = box_y * 3
         box_y_max = (box_y * 3) + 3
 
+        # print('loc + relevant coords')
+        # print(location)
         for i in range(box_x_min, box_x_max):   # all values in the same box
             for j in range(box_y_min, box_y_max):
+                # print((i,j))
                 relevant_coords.append((i,j))
 
         relevant_coords = list(set(relevant_coords))    # return a set (one of each)
-        relevant_coords.remove(location)                # make sure THIS location is not retuned
+        relevant_coords.remove(location)                # make sure THIS location is not returned
+        # print('relevant coords to ' + str(location)+ ' are ' + str(relevant_coords))
         return relevant_coords
 
     # propogate returns assignment, domain as a tuple ?
     def propagate(self, domains, assignments):
         i = 0
+        # print('begin propagate')
         while True:
-            print('iteration '+str(i))
-            there_are_singletons = False
+            # print('iteration '+str(i))
             # do assignments for singletons
-            for key in list(domains.keys()):   
+            # print('singletons')
+            for key in list(domains.keys()): 
                 if len(domains[key]) == 1:
                     assignments[key] = domains[key][0]
-                    there_are_singletons = True
 
-            if not there_are_singletons:
-                return assignments, domains
-
+            # print('reassign this assignments domains')
             # update domain for assigned x's
             for key in list(assignments.keys()):
+                # print('updating domains to their assignment')
                 if key == (-1,-1): continue
                 domains[key] = [assignments[key]]
+                # print(key)
+                # print(domains[key])
 
+            print('checking for conflicts')
             # check conflicts ?
-            for single_domain in list(domains.values()):
-                if len(single_domain) == 0:
+            for location in list(domains.keys()):
+                print(len(domains[key]))
+                if domains[key] == []:
                     assignments[(-1,-1)] = -1 # this indicates conflict.
                     return assignments, domains
 
+            print('update other domains')
+            conflict_flag = False
             # update OTHER relevant values
             for location in list(assignments.keys()):
+                
+                if location == (-1,-1): continue
+                # print(self.get_relevant_coords(location))
                 for coord in self.get_relevant_coords(location):
-                    domains[coord].remove(assignments[location])
-                    
+                    if assignments[location] in domains[coord]:
+                        print('before | after')
+                        print(domains[coord])
+                        conflict_flag = True
+                        domains[coord].remove(assignments[location])
+                        print(domains[coord])
+
+            if(not conflict_flag):
+                return assignments, domains
+
+            # print(str(len(assignments)) + ' ' + str(len(domains)))
             i+=1
+        
+        
+        
 
     def make_decision(self, domains, assignments):
         # remove all assigned locations from the key
         for key in list(domains.keys()):
-            if len(domains[key]) != 1:
+            if len(domains[key]) > 1:
                 assignments[key] = domains[key][0]
+                print('decision made: '+ str(assignments[key]) + ' @ ' + str(key))
                 return assignments, key
+
+        # if we reach here there must be a conflict
+        # return assignments, key
         # NOTE: we cant make a decision if all domains are length 1 (or 0)
 
     def backtrack(self, decision_stack):
