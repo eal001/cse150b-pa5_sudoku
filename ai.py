@@ -50,7 +50,7 @@ class AI:
         while True:
             there_are_singletons = False
             # do assignments for singletons
-            for key in list(domains.keys):   
+            for key in list(domains.keys()):   
                 if len(domains[key]) == 1:
                     assignments[key] = domains[key][1]
                     there_are_singletons = True
@@ -59,18 +59,18 @@ class AI:
                 return assignments, domains
 
             # update domain for assigned x's
-            for key in list(assignments.keys):
+            for key in list(assignments.keys()):
                 domains[key].remove(assignments[key])
 
             # check conflicts ?
-            for domain in list(domain.values):
+            for domain in list(domain.values()):
                 if len(domain) <= 0:
                     assignments[(-1,-1)] = -1 # this indicates conflict.
                     return assignments, domain
 
     def make_decision(self, domains, assignments):
         # remove all assigned locations from the key
-        for key in list(domains.keys):
+        for key in list(domains.keys()):
             if len(domains[key]) != 1:
                 assignments[key] = domains[key][0]
                 return assignments, key
