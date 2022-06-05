@@ -11,11 +11,12 @@ class AI:
         domains = init_domains()
         restrict_domain(domains, problem) 
 
-        assignments = {(-1, -1): 0}
+        assignments = {}
         decision_stack = []
 
         # TODO: implement backtracking search. 
         while True:
+            assignments[(-1,-1)] = 0
             assignments, domains = self.propagate(domains, assignments)
             
             if assignments[(-1,-1)] != -1:      # no conflicts
@@ -52,7 +53,7 @@ class AI:
             # do assignments for singletons
             for key in list(domains.keys()):   
                 if len(domains[key]) == 1:
-                    assignments[key] = domains[key][1]
+                    assignments[key] = domains[key][0]
                     there_are_singletons = True
 
             if not there_are_singletons:
@@ -60,6 +61,7 @@ class AI:
 
             # update domain for assigned x's
             for key in list(assignments.keys()):
+                if key == (-1,-1): continue
                 domains[key].remove(assignments[key])
 
             # check conflicts ?
