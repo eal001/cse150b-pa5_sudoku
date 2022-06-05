@@ -16,9 +16,10 @@ class AI:
 
         # TODO: implement backtracking search. 
         while True:
-            assignments[(-1,-1)] = 0
+            # assignments[(-1,-1)] = 0
             assignments, domains = self.propagate(domains, assignments)
-            
+            print("#################\nfinal assignment check")
+            print(assignments[(-1, -1)])
             if assignments[(-1,-1)] != -1:      # no conflicts
                 if len(assignments.keys) == 82  : # finished! all assigned
                     return domains
@@ -27,7 +28,6 @@ class AI:
                     decision_stack.append( (assignments, location, domains) )
             else:                               # there is a conflict
                 if len(decision_stack) == 0:    # no more 'previous decisions' the initial setup has a conlict
-                    print('\n##################\nno solution.\n#################\n')
                     return None
                 else:                           # more previous decisions
                     assignments, domains = self.backtrack(decision_stack)
@@ -45,10 +45,37 @@ class AI:
 
     # TODO: add any supporting function you need
 
+    # location should be a 0 indexed (x, y)
+    def get_relevant_coords(self, location):
+        relevant_coords = []
+        for i in range(8):  # all values in the same column
+            if i == location[0]: continue
+            relevant_coords.append((i, location[1]))
+
+        for j in range(8): # all values in the same row
+            if j == location[1]: continue
+            relevant_coords.append((location[0], j))
+
+        box_x = int(location[0] / 3)
+        box_y = int(location[1] / 3)
+        box_x_min = box_x * 3
+        box_x_max = (box_x * 3) + 3
+        box_y_min = box_y * 3
+        box_y_max = (box_y * 3) + 3
+
+        for i in range(box_x_min, box_x_max):   # all values in the same box
+            for j in range(box_y_min, box_y_max):
+                relevant_coords.append((i,j))
+
+        relevant_coords = list(set(relevant_coords))    # return a set (one of each)
+        relevant_coords.remove(location)                # make sure THIS location is not retuned
+        return relevant_coords
+
     # propogate returns assignment, domain as a tuple ?
     def propagate(self, domains, assignments):
-        
+        i = 0
         while True:
+            print('iteration '+str(i))
             there_are_singletons = False
             # do assignments for singletons
             for key in list(domains.keys()):   
@@ -62,13 +89,20 @@ class AI:
             # update domain for assigned x's
             for key in list(assignments.keys()):
                 if key == (-1,-1): continue
-                domains[key].remove(assignments[key])
+                domains[key] = [assignments[key]]
 
             # check conflicts ?
             for single_domain in list(domains.values()):
-                if len(single_domain) <= 0:
+                if len(single_domain) == 0:
                     assignments[(-1,-1)] = -1 # this indicates conflict.
                     return assignments, domains
+
+            # update OTHER relevant values
+            for location in list(assignments.keys()):
+                for coord in self.get_relevant_coords(location):
+                    domains[coord].remove(assignments[location])
+                    
+            i+=1
 
     def make_decision(self, domains, assignments):
         # remove all assigned locations from the key
