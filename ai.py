@@ -32,6 +32,7 @@ class AI:
                     assignments, domains = self.backtrack(decision_stack)
         
         
+        
         # TODO: delete this block ->
         # Note that the display and test functions in the main file take domains as inputs. 
         #   So when returning the final solution, make sure to take your assignment function 
